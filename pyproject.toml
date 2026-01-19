@@ -21,14 +21,16 @@ dependencies = [
 ]
 
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
 
 [tool.pytest.ini_options]
 pythonpath = [
     "src"
 ]
+
+[project.scripts]
+quantmc = "quantmc.cli:main"

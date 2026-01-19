@@ -19,7 +19,8 @@ class MonteCarloPricer:
         time,
         steps,
         paths,
-        seed=None
+        seed=None,
+        antithetic=False
     ):
 
 
@@ -27,7 +28,8 @@ class MonteCarloPricer:
             time=time,
             steps=steps,
             paths=paths,
-            seed=seed
+            seed=seed,
+            antithetic=antithetic
         )
 
         payoffs = self.payoff.calculate(
