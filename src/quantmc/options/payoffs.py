@@ -4,7 +4,7 @@ import numpy as np
 
 class OptionPayoff(ABC):
     """
-    Abstract base class for option payoffs.
+    Abstract base class for option payoffs
     """
 
     @abstractmethod
@@ -14,7 +14,7 @@ class OptionPayoff(ABC):
 
 class EuropeanCall(OptionPayoff):
     """
-    European call option.
+    European call option
 
     Payoff:
         max(S_T - K, 0)
@@ -34,7 +34,7 @@ class EuropeanCall(OptionPayoff):
 
 class EuropeanPut(OptionPayoff):
     """
-    European put option.
+    European put option
 
     Payoff:
         max(K - S_T, 0)
@@ -54,7 +54,7 @@ class EuropeanPut(OptionPayoff):
 
 class AsianCall(OptionPayoff):
     """
-    Asian call option.
+    Asian call option
 
     Payoff:
         max(average(S_t) - K, 0)

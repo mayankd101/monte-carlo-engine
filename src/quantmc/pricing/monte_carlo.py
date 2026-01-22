@@ -1,5 +1,10 @@
 import numpy as np
 
+from quantmc.analytics.statistics import (
+    standard_error,
+    confidence_interval
+)
+
 
 class MonteCarloPricer:
 
@@ -14,7 +19,7 @@ class MonteCarloPricer:
         self.r = risk_free_rate
 
 
-    def price(
+    def _simulate_payoffs(
         self,
         time,
         steps,
@@ -22,7 +27,6 @@ class MonteCarloPricer:
         seed=None,
         antithetic=False
     ):
-
 
         simulated_prices = self.model.simulate(
             time=time,
@@ -36,6 +40,26 @@ class MonteCarloPricer:
             simulated_prices
         )
 
+        return payoffs
+
+
+    def price(
+        self,
+        time,
+        steps,
+        paths,
+        seed=None,
+        antithetic=False
+    ):
+
+        payoffs = self._simulate_payoffs(
+            time=time,
+            steps=steps,
+            paths=paths,
+            seed=seed,
+            antithetic=antithetic
+        )
+
         expected_payoff = np.mean(payoffs)
 
         discounted_value = (
@@ -45,3 +69,51 @@ class MonteCarloPricer:
         )
 
         return discounted_value
+
+
+    def price_with_statistics(
+        self,
+        time,
+        steps,
+        paths,
+        seed=None,
+        antithetic=False,
+        confidence=0.95
+    ):
+
+        payoffs = self._simulate_payoffs(
+            time=time,
+            steps=steps,
+            paths=paths,
+            seed=seed,
+            antithetic=antithetic
+        )
+
+        discount_factor = np.exp(
+            -self.r * time
+        )
+
+        discounted_payoffs = (
+            payoffs * discount_factor
+        )
+
+        price = np.mean(
+            discounted_payoffs
+        )
+
+        error = standard_error(
+            discounted_payoffs
+        )
+
+        interval = confidence_interval(
+            price,
+            error,
+            confidence
+        )
+
+        return {
+            "price": price,
+            "standard_error": error,
+            "confidence_interval": interval,
+            "paths": paths
+        }

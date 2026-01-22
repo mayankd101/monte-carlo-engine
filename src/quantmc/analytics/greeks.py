@@ -126,3 +126,155 @@ class BlackScholesGreeks:
             *
             norm.cdf(self._d2())
         )
+    
+
+class MonteCarloGreeks:
+
+    def __init__(self, pricer):
+        self.pricer = pricer
+
+
+    def delta(
+        self,
+        time,
+        steps,
+        paths,
+        bump=0.01,
+        seed=None
+    ):
+        """
+        Delta using central finite difference
+        """
+
+        import copy
+
+        original_model = self.pricer.model
+
+        up_model = copy.deepcopy(original_model)
+        down_model = copy.deepcopy(original_model)
+
+        up_model.S0 += bump
+        down_model.S0 -= bump
+
+        self.pricer.model = up_model
+        price_up = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = down_model
+        price_down = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = original_model
+
+        return (
+            price_up - price_down
+        ) / (2 * bump)
+
+
+    def vega(
+        self,
+        time,
+        steps,
+        paths,
+        bump=0.01,
+        seed=None
+    ):
+        """
+        Vega using central finite difference
+        """
+
+        import copy
+
+        original_model = self.pricer.model
+
+        up_model = copy.deepcopy(original_model)
+        down_model = copy.deepcopy(original_model)
+
+        up_model.sigma += bump
+        down_model.sigma -= bump
+
+        self.pricer.model = up_model
+        price_up = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = down_model
+        price_down = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = original_model
+
+        return (
+            price_up - price_down
+        ) / (2 * bump)
+    
+    
+    def gamma(
+        self,
+        time,
+        steps,
+        paths,
+        bump=0.01,
+        seed=None
+    ):
+        """
+        Gamma using central finite difference
+        """
+
+        import copy
+
+        original_model = self.pricer.model
+
+        up_model = copy.deepcopy(original_model)
+        mid_model = copy.deepcopy(original_model)
+        down_model = copy.deepcopy(original_model)
+
+        up_model.S0 += bump
+        down_model.S0 -= bump
+
+        self.pricer.model = up_model
+        price_up = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = mid_model
+        price_mid = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = down_model
+        price_down = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = original_model
+
+        return (
+            price_up
+            - 2 * price_mid
+            + price_down
+        ) / (bump ** 2)
