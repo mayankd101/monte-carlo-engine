@@ -9,6 +9,7 @@ EXAMPLES = {
     "calculate-greeks": "quantmc.examples.calculate_greeks",
     "variance-reduction": "quantmc.examples.variance_reduction",
     "convergence": "quantmc.examples.convergence",
+    "variance-benchmark": "quantmc.examples.variance_benchmark",
 }
 
 

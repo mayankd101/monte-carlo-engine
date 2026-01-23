@@ -43,6 +43,32 @@ class MonteCarloPricer:
         return payoffs
 
 
+    def simulate_payoffs(
+        self,
+        time,
+        steps,
+        paths,
+        seed=None,
+        antithetic=False
+    ):
+        """
+        Generate raw option payoff samples.
+
+        Useful for:
+        - variance analysis
+        - variance reduction comparisons
+        - Monte Carlo diagnostics
+        """
+
+        return self._simulate_payoffs(
+            time=time,
+            steps=steps,
+            paths=paths,
+            seed=seed,
+            antithetic=antithetic
+        )
+
+
     def price(
         self,
         time,
