@@ -8,6 +8,7 @@ EXAMPLES = {
     "compare-pricers": "quantmc.examples.compare_pricers",
     "calculate-greeks": "quantmc.examples.calculate_greeks",
     "variance-reduction": "quantmc.examples.variance_reduction",
+    "convergence": "quantmc.examples.convergence",
 }
 
 

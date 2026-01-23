@@ -20,6 +20,6 @@ def confidence_interval(
     z = 1.96 if confidence == 0.95 else 1.645
 
     return (
-        estimate - z * error,
-        estimate + z * error
+        float(estimate - z * error),
+        float(estimate + z * error)
     )
