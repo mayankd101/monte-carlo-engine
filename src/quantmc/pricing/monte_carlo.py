@@ -68,6 +68,33 @@ class MonteCarloPricer:
             antithetic=antithetic
         )
 
+    def simulate_payoffs_and_prices(
+        self,
+        time,
+        steps,
+        paths,
+        seed=None,
+        antithetic=False
+    ):
+
+        simulated_prices = self.model.simulate(
+            time=time,
+            steps=steps,
+            paths=paths,
+            seed=seed,
+            antithetic=antithetic
+        )
+
+        payoffs = self.payoff.calculate(
+            simulated_prices
+        )
+
+        terminal_prices = simulated_prices[:, -1]
+
+        return {
+            "payoffs": payoffs,
+            "terminal_prices": terminal_prices
+        }
 
     def price(
         self,

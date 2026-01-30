@@ -3,7 +3,11 @@ import numpy as np
 from quantmc.models.gbm import GBM
 from quantmc.options.payoffs import EuropeanCall
 from quantmc.pricing.monte_carlo import MonteCarloPricer
-from quantmc.analytics.variance_reduction import variance, variance_reduction
+from quantmc.analytics.variance_reduction import (
+    variance,
+    variance_reduction,
+    control_variate_adjustment
+)
 from quantmc.analytics.statistics import standard_error
 
 
@@ -65,10 +69,41 @@ standard_discounted = (
     discount_factor
 )
 
+
 antithetic_discounted = (
     antithetic_estimates
     *
     discount_factor
+)
+
+
+control_data = pricer.simulate_payoffs_and_prices(
+    time=time,
+    steps=100,
+    paths=paths,
+    seed=42,
+    antithetic=False
+)
+
+
+control_payoffs = (
+    control_data["payoffs"]
+    *
+    discount_factor
+)
+
+
+control_prices = (
+    control_data["terminal_prices"]
+    *
+    discount_factor
+)
+
+
+control_adjusted = control_variate_adjustment(
+    samples=control_payoffs,
+    control_samples=control_prices,
+    expected_control=100
 )
 
 
@@ -80,6 +115,10 @@ antithetic_price = np.mean(
     antithetic_discounted
 )
 
+control_price = np.mean(
+    control_adjusted
+)
+
 
 standard_variance = variance(
     standard_discounted
@@ -89,6 +128,10 @@ antithetic_variance = variance(
     antithetic_discounted
 )
 
+control_variance = variance(
+    control_adjusted
+)
+
 
 standard_error_mc = standard_error(
     standard_discounted
@@ -96,6 +139,10 @@ standard_error_mc = standard_error(
 
 antithetic_error_mc = standard_error(
     antithetic_discounted
+)
+
+control_error_mc = standard_error(
+    control_adjusted
 )
 
 
@@ -113,6 +160,25 @@ error_reduction_pct = (
     1
     -
     antithetic_error_mc
+    /
+    standard_error_mc
+) * 100
+
+
+control_variance_reduction_pct = (
+    variance_reduction(
+        standard_discounted,
+        control_adjusted
+    )
+    *
+    100
+)
+
+
+control_error_reduction_pct = (
+    1
+    -
+    control_error_mc
     /
     standard_error_mc
 ) * 100
@@ -144,12 +210,33 @@ print(
     f"{antithetic_variance:<15.5f}"
 )
 
+print(
+    f"{'Control Variate':<20}"
+    f"{control_price:<15.5f}"
+    f"{control_error_mc:<15.5f}"
+    f"{control_variance:<15.5f}"
+)
+
 print()
 
 print(
-    f"Variance Reduction: {variance_reduction_pct:.2f}%"
+    f"Antithetic Variance Reduction: "
+    f"{variance_reduction_pct:.2f}%"
 )
 
 print(
-    f"Std Error Reduction: {error_reduction_pct:.2f}%"
+    f"Antithetic Std Error Reduction: "
+    f"{error_reduction_pct:.2f}%"
+)
+
+print()
+
+print(
+    f"Control Variate Variance Reduction: "
+    f"{control_variance_reduction_pct:.2f}%"
+)
+
+print(
+    f"Control Variate Std Error Reduction: "
+    f"{control_error_reduction_pct:.2f}%"
 )
