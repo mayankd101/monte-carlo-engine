@@ -12,6 +12,7 @@ EXAMPLES = {
     "variance-benchmark": "quantmc.examples.variance_benchmark",
     "validate-greeks": "quantmc.examples.validate_greeks",
     "american-option": "quantmc.examples.american_option",
+    "heston-benchmark": "quantmc.examples.heston_benchmark",
 }
 
 

@@ -30,8 +30,14 @@ class Heston:
         time,
         steps,
         paths,
-        seed=None
+        seed=None,
+        antithetic=False
     ):
+
+        if antithetic:
+            raise NotImplementedError(
+                "Antithetic variates are not yet implemented for Heston"
+            )
 
         if seed is not None:
             np.random.seed(seed)
