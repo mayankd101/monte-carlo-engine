@@ -3,13 +3,17 @@ import numpy as np
 
 
 class OptionPayoff(ABC):
-    """
-    Abstract base class for option payoffs
-    """
 
     @abstractmethod
-    def calculate(self, prices):
+    def terminal_payoff(self, prices):
         pass
+
+    @abstractmethod
+    def exercise_value(self, prices):
+        pass
+
+    def calculate(self, prices):
+        return self.terminal_payoff(prices)
 
 
 class EuropeanCall(OptionPayoff):
@@ -17,17 +21,25 @@ class EuropeanCall(OptionPayoff):
     European call option
 
     Payoff:
-        max(S_T - K, 0)
+        max(S - K, 0)
     """
 
     def __init__(self, strike: float):
         self.strike = strike
 
-    def calculate(self, prices):
+    def terminal_payoff(self, prices):
+
         terminal_prices = prices[:, -1]
 
         return np.maximum(
             terminal_prices - self.strike,
+            0
+        )
+
+    def exercise_value(self, prices):
+
+        return np.maximum(
+            prices - self.strike,
             0
         )
 
@@ -37,13 +49,14 @@ class EuropeanPut(OptionPayoff):
     European put option
 
     Payoff:
-        max(K - S_T, 0)
+        max(K - S, 0)
     """
 
     def __init__(self, strike: float):
         self.strike = strike
 
-    def calculate(self, prices):
+    def terminal_payoff(self, prices):
+
         terminal_prices = prices[:, -1]
 
         return np.maximum(
@@ -51,19 +64,27 @@ class EuropeanPut(OptionPayoff):
             0
         )
 
+    def exercise_value(self, prices):
+
+        return np.maximum(
+            self.strike - prices,
+            0
+        )
+
 
 class AsianCall(OptionPayoff):
     """
-    Asian call option
+    Arithmetic Asian call option
 
     Payoff:
-        max(average(S_t) - K, 0)
+        max(mean(S) - K, 0)
     """
 
     def __init__(self, strike: float):
         self.strike = strike
 
-    def calculate(self, prices):
+    def terminal_payoff(self, prices):
+
         average_price = np.mean(
             prices[:, 1:],
             axis=1
@@ -72,4 +93,10 @@ class AsianCall(OptionPayoff):
         return np.maximum(
             average_price - self.strike,
             0
+        )
+
+    def exercise_value(self, prices):
+        raise NotImplementedError(
+            "Asian options do not have a simple intrinsic "
+            "exercise value."
         )

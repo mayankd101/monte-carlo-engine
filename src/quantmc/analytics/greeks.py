@@ -1,9 +1,9 @@
+import copy
 import numpy as np
 from scipy.stats import norm
 
 
 class BlackScholesGreeks:
-
 
     def __init__(
         self,
@@ -30,7 +30,8 @@ class BlackScholesGreeks:
                 +
                 0.5 * self.sigma ** 2
             )
-            * self.T
+            *
+            self.T
         ) / (
             self.sigma * np.sqrt(self.T)
         )
@@ -38,23 +39,18 @@ class BlackScholesGreeks:
 
     def _d2(self):
 
-        return self._d1() - (
+        return (
+            self._d1()
+            -
             self.sigma * np.sqrt(self.T)
         )
 
 
     def delta(self):
-        """
-        Call option delta.
-        """
-
         return norm.cdf(self._d1())
 
 
     def gamma(self):
-        """
-        Gamma for call and put.
-        """
 
         return (
             norm.pdf(self._d1())
@@ -70,9 +66,6 @@ class BlackScholesGreeks:
 
 
     def vega(self):
-        """
-        Vega per 1.0 volatility change.
-        """
 
         return (
             self.S
@@ -84,18 +77,12 @@ class BlackScholesGreeks:
 
 
     def theta(self):
-        """
-        Call option theta.
-        """
-
-        d1 = self._d1()
-        d2 = self._d2()
 
         return (
             -(
                 self.S
                 *
-                norm.pdf(d1)
+                norm.pdf(self._d1())
                 *
                 self.sigma
             )
@@ -108,14 +95,11 @@ class BlackScholesGreeks:
             *
             np.exp(-self.r * self.T)
             *
-            norm.cdf(d2)
+            norm.cdf(self._d2())
         )
 
 
     def rho(self):
-        """
-        Call option rho.
-        """
 
         return (
             self.K
@@ -126,12 +110,40 @@ class BlackScholesGreeks:
             *
             norm.cdf(self._d2())
         )
-    
+
 
 class MonteCarloGreeks:
 
-    def __init__(self, pricer):
+    def __init__(
+        self,
+        pricer
+    ):
         self.pricer = pricer
+
+
+    def _price_with_model(
+        self,
+        model,
+        time,
+        steps,
+        paths,
+        seed
+    ):
+
+        original = self.pricer.model
+
+        self.pricer.model = model
+
+        price = self.pricer.price(
+            time,
+            steps,
+            paths,
+            seed=seed
+        )
+
+        self.pricer.model = original
+
+        return price
 
 
     def delta(
@@ -142,41 +154,75 @@ class MonteCarloGreeks:
         bump=0.01,
         seed=None
     ):
-        """
-        Delta using central finite difference
-        """
 
-        import copy
+        up = copy.deepcopy(self.pricer.model)
+        down = copy.deepcopy(self.pricer.model)
 
-        original_model = self.pricer.model
-
-        up_model = copy.deepcopy(original_model)
-        down_model = copy.deepcopy(original_model)
-
-        up_model.S0 += bump
-        down_model.S0 -= bump
-
-        self.pricer.model = up_model
-        price_up = self.pricer.price(
-            time,
-            steps,
-            paths,
-            seed=seed
-        )
-
-        self.pricer.model = down_model
-        price_down = self.pricer.price(
-            time,
-            steps,
-            paths,
-            seed=seed
-        )
-
-        self.pricer.model = original_model
+        up.S0 += bump
+        down.S0 -= bump
 
         return (
-            price_up - price_down
+            self._price_with_model(
+                up,
+                time,
+                steps,
+                paths,
+                seed
+            )
+            -
+            self._price_with_model(
+                down,
+                time,
+                steps,
+                paths,
+                seed
+            )
         ) / (2 * bump)
+
+
+    def gamma(
+        self,
+        time,
+        steps,
+        paths,
+        bump=0.01,
+        seed=None
+    ):
+
+        up = copy.deepcopy(self.pricer.model)
+        mid = copy.deepcopy(self.pricer.model)
+        down = copy.deepcopy(self.pricer.model)
+
+        up.S0 += bump
+        down.S0 -= bump
+
+        return (
+            self._price_with_model(
+                up,
+                time,
+                steps,
+                paths,
+                seed
+            )
+            -
+            2
+            *
+            self._price_with_model(
+                mid,
+                time,
+                steps,
+                paths,
+                seed
+            )
+            +
+            self._price_with_model(
+                down,
+                time,
+                steps,
+                paths,
+                seed
+            )
+        ) / (bump ** 2)
 
 
     def vega(
@@ -187,44 +233,33 @@ class MonteCarloGreeks:
         bump=0.01,
         seed=None
     ):
-        """
-        Vega using central finite difference
-        """
 
-        import copy
+        up = copy.deepcopy(self.pricer.model)
+        down = copy.deepcopy(self.pricer.model)
 
-        original_model = self.pricer.model
-
-        up_model = copy.deepcopy(original_model)
-        down_model = copy.deepcopy(original_model)
-
-        up_model.sigma += bump
-        down_model.sigma -= bump
-
-        self.pricer.model = up_model
-        price_up = self.pricer.price(
-            time,
-            steps,
-            paths,
-            seed=seed
-        )
-
-        self.pricer.model = down_model
-        price_down = self.pricer.price(
-            time,
-            steps,
-            paths,
-            seed=seed
-        )
-
-        self.pricer.model = original_model
+        up.sigma += bump
+        down.sigma -= bump
 
         return (
-            price_up - price_down
+            self._price_with_model(
+                up,
+                time,
+                steps,
+                paths,
+                seed
+            )
+            -
+            self._price_with_model(
+                down,
+                time,
+                steps,
+                paths,
+                seed
+            )
         ) / (2 * bump)
-    
-    
-    def gamma(
+
+
+    def theta(
         self,
         time,
         steps,
@@ -232,49 +267,112 @@ class MonteCarloGreeks:
         bump=0.01,
         seed=None
     ):
-        """
-        Gamma using central finite difference
-        """
 
-        import copy
+        shorter_time = time - bump
 
-        original_model = self.pricer.model
+        if shorter_time <= 0:
+            raise ValueError(
+                "Time bump must be smaller than maturity"
+            )
 
-        up_model = copy.deepcopy(original_model)
-        mid_model = copy.deepcopy(original_model)
-        down_model = copy.deepcopy(original_model)
-
-        up_model.S0 += bump
-        down_model.S0 -= bump
-
-        self.pricer.model = up_model
-        price_up = self.pricer.price(
-            time,
+        price_shorter = self.pricer.price(
+            shorter_time,
             steps,
             paths,
             seed=seed
         )
 
-        self.pricer.model = mid_model
-        price_mid = self.pricer.price(
+        price_current = self.pricer.price(
             time,
             steps,
             paths,
             seed=seed
         )
-
-        self.pricer.model = down_model
-        price_down = self.pricer.price(
-            time,
-            steps,
-            paths,
-            seed=seed
-        )
-
-        self.pricer.model = original_model
 
         return (
-            price_up
-            - 2 * price_mid
-            + price_down
-        ) / (bump ** 2)
+            price_shorter
+            -
+            price_current
+        ) / bump
+
+
+    def rho(
+        self,
+        time,
+        steps,
+        paths,
+        bump=0.01,
+        seed=None
+    ):
+
+        up = copy.deepcopy(
+            self.pricer.model
+        )
+
+        down = copy.deepcopy(
+            self.pricer.model
+        )
+
+        up.r += bump
+        down.r -= bump
+
+        return (
+            self._price_with_model(
+                up,
+                time,
+                steps,
+                paths,
+                seed
+            )
+            -
+            self._price_with_model(
+                down,
+                time,
+                steps,
+                paths,
+                seed
+            )
+        ) / (2 * bump)
+    
+    def delta_pathwise(
+        self,
+        time,
+        steps,
+        paths,
+        seed=None
+    ):
+
+        simulated_prices = self.pricer.model.simulate(
+            time=time,
+            steps=steps,
+            paths=paths,
+            seed=seed
+        )
+
+        terminal_prices = (
+            simulated_prices[:, -1]
+        )
+
+        strike = self.pricer.payoff.strike
+
+        indicator = (
+            terminal_prices > strike
+        )
+
+        delta_samples = (
+            indicator
+            *
+            terminal_prices
+            /
+            self.pricer.model.S0
+        )
+
+        discount_factor = np.exp(
+            -self.pricer.r * time
+        )
+
+        return (
+            discount_factor
+            *
+            np.mean(delta_samples)
+        )
