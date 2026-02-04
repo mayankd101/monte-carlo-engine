@@ -1,4 +1,8 @@
 import time
+from quantmc.analytics.plots import (
+    plot_price_convergence,
+    plot_error_convergence
+)
 
 
 def convergence_analysis(
@@ -32,4 +36,7 @@ def convergence_analysis(
             "runtime": runtime
         }
 
+    plot_price_convergence(results)
+    plot_error_convergence(results)
     return results
+
