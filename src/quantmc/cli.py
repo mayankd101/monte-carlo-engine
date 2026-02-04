@@ -13,6 +13,7 @@ EXAMPLES = {
     "validate-greeks": "quantmc.examples.validate_greeks",
     "american-option": "quantmc.examples.american_option",
     "heston-benchmark": "quantmc.examples.heston_benchmark",
+    "performance-benchmark": "quantmc.examples.performance_benchmark",
 }
 
 
