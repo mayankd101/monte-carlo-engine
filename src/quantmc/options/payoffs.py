@@ -100,3 +100,32 @@ class AsianCall(OptionPayoff):
             "Asian options do not have a simple intrinsic "
             "exercise value."
         )
+    
+class AmericanPut(OptionPayoff):
+    """
+    American put option
+
+    Payoff:
+        max(K - S_t, 0)
+    """
+
+    def __init__(self, strike: float):
+        self.strike = strike
+
+
+    def terminal_payoff(self, prices):
+
+        terminal_prices = prices[:, -1]
+
+        return np.maximum(
+            self.strike - terminal_prices,
+            0
+        )
+
+
+    def exercise_value(self, prices):
+
+        return np.maximum(
+            self.strike - prices,
+            0
+        )

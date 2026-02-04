@@ -11,6 +11,7 @@ EXAMPLES = {
     "convergence": "quantmc.examples.convergence",
     "variance-benchmark": "quantmc.examples.variance_benchmark",
     "validate-greeks": "quantmc.examples.validate_greeks",
+    "american-option": "quantmc.examples.american_option",
 }
 
 

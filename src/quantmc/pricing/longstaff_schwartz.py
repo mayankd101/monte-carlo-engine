@@ -30,16 +30,14 @@ class LongstaffSchwartzPricer:
         )
 
 
-    def _initialize_cashflows(
+    def _discount(
         self,
-        simulated_paths
+        cashflows,
+        dt
     ):
-        """
-        Initialize cashflows at maturity
-        """
 
-        return self.payoff.terminal_payoff(
-            simulated_paths
+        return cashflows * np.exp(
+            -self.r * dt
         )
 
 
@@ -58,12 +56,88 @@ class LongstaffSchwartzPricer:
             seed=seed
         )
 
-        cashflows = self._initialize_cashflows(
+
+        dt = time / steps
+
+
+
+        cashflows = self.payoff.terminal_payoff(
             simulated_paths
         )
 
+
+
+        for t in range(
+            steps - 1,
+            0,
+            -1
+        ):
+
+            stock_prices = (
+                simulated_paths[:, t]
+            )
+
+
+            exercise_values = (
+                self.payoff.exercise_value(
+                    stock_prices
+                )
+            )
+
+
+            in_money = (
+                exercise_values > 0
+            )
+
+
+            if np.any(in_money):
+
+                X = stock_prices[in_money]
+
+                Y = self._discount(
+                    cashflows[in_money],
+                    dt
+                )
+
+
+                coefficients = np.polyfit(
+                    X,
+                    Y,
+                    2
+                )
+
+
+                continuation = np.polyval(
+                    coefficients,
+                    X
+                )
+
+
+                exercise = (
+                    exercise_values[in_money]
+                    >
+                    continuation
+                )
+
+
+                exercise_indices = np.where(
+                    in_money
+                )[0][exercise]
+
+
+                cashflows[
+                    exercise_indices
+                ] = exercise_values[
+                    exercise_indices
+                ]
+
+
+            cashflows = self._discount(
+                cashflows,
+                dt
+            )
+
+
         return np.mean(
             cashflows
-            *
-            np.exp(-self.r * time)
         )
