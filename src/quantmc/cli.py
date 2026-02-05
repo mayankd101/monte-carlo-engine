@@ -14,6 +14,7 @@ EXAMPLES = {
     "american-option": "quantmc.examples.american_option",
     "heston-benchmark": "quantmc.examples.heston_benchmark",
     "performance-benchmark": "quantmc.examples.performance_benchmark",
+    "implied-volatility": "quantmc.examples.implied_volatility",
 }
 
 
